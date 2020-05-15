@@ -1,0 +1,42 @@
+ 
+version: '3'
+
+networks:
+  database_awesome_project_network:
+    driver: bridge
+
+volumes:
+  database_awesome_project_mysql_data: {}
+
+services: 
+  database:
+    build:
+      context: .
+      dockerfile: ./compose/database/Dockerfile
+    image: awesome_project_local_database
+    env_file:
+      - ./.envs/.local/.database
+    volumes:
+      - database_awesome_project_mysql_data:/var/lib/mysql
+    networks:
+      - database_awesome_project_network
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./compose/backend/Dockerfile
+      args:
+        - BUILD_ENV=local
+    image: awesome_project_local_backend
+    depends_on: 
+      - database
+    env_file: 
+      - ./.envs/.local/.backend
+      - ./.envs/.local/.database
+    volumes:
+      - ./backend:/app
+    ports:
+      - 8000:8000
+    networks:
+      - database_awesome_project_network
+    command: /start
